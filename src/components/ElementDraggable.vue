@@ -44,9 +44,8 @@
         @click="startEditing"
         class="text-content"
         :style="textContentStyle"
-      >
-        {{ element.content || "Нажмите для редактирования" }}
-      </div>
+        v-html="formattedContent"
+      />
 
       <!-- Угловые маркеры для растягивания -->
       <div v-if="isEditing" class="resize-handles">
@@ -124,6 +123,15 @@ const emit = defineEmits(["select", "update", "remove"]);
 const isEditing = ref(false);
 const bookStore = useBookStore();
 const textInput = ref(null);
+
+const formatTextWithLineBreaks = (text) => {
+  if (!text) return 'Нажмите для редактирования'
+  return text.replace(/\n/g, '<br>')
+}
+
+const formattedContent = computed(() => {
+  return formatTextWithLineBreaks(props.element.content)
+})
 
 const elementStyle = computed(() => ({
   left: `${props.element.x}px`,
