@@ -1,6 +1,14 @@
 <!-- components/SpreadEditor.vue -->
 <template>
   <div class="spread-editor">
+    <TextFormatToolbar
+      v-if="showFormatToolbar && selectedTextElement"
+      :visible="showFormatToolbar"
+      :element="selectedTextElement"
+      @update="updateElement(selectedTextElement.id, $event)"
+      @close="closeFormatToolbar"
+    />
+
     <div
       class="spread-container"
       ref="spreadContainer"
@@ -13,7 +21,7 @@
           :key="element.id"
           :element="element"
           :is-selected="selectedElementId === element.id"
-          @select="selectElement(element.id)"
+          @select="selectElement(element)"
           @update="updateElement(element.id, $event)"
           @remove="removeElement(element.id)"
         />
@@ -26,15 +34,27 @@
 import { ref, computed, onMounted } from "vue";
 import { useBookStore } from "../stores/useBookStore";
 import ElementDraggable from "./ElementDraggable.vue";
+import TextFormatToolbar from "./TextFormatToolbar.vue";
 
 const bookStore = useBookStore();
 const spreadContainer = ref(null);
 const selectedElementId = ref(null);
+const selectedTextElement = ref(null);
+const showFormatToolbar = ref(false);
 
 const currentSpread = computed(() => bookStore.currentSpread);
 
-function selectElement(id) {
-  selectedElementId.value = id;
+function selectElement(element) {
+  selectedElementId.value = element.id;
+
+  // Если выбран текстовый элемент - показываем панель форматирования
+  if (element.type === "text") {
+    selectedTextElement.value = element;
+    showFormatToolbar.value = true;
+    console.log("text");
+  } else {
+    closeFormatToolbar();
+  }
 }
 
 function updateElement(id, updates) {
@@ -45,7 +65,13 @@ function removeElement(id) {
   bookStore.removeElement(id);
   if (selectedElementId.value === id) {
     selectedElementId.value = null;
+    closeFormatToolbar();
   }
+}
+
+function closeFormatToolbar() {
+  showFormatToolbar.value = false;
+  selectedTextElement.value = null;
 }
 
 function handleDragOver(e) {
@@ -82,6 +108,7 @@ onMounted(() => {
   spreadContainer.value?.addEventListener("click", (e) => {
     if (e.target === spreadContainer.value) {
       selectedElementId.value = null;
+      closeFormatToolbar();
     }
   });
 });
@@ -95,6 +122,7 @@ onMounted(() => {
   align-items: center;
   background: #f5f5f5;
   padding: 20px;
+  position: relative;
 }
 
 .spread-container {
